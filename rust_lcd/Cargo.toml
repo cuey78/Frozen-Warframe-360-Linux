@@ -1,0 +1,16 @@
+[package]
+name = "usb_lcd_rust"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rusb = "0.9"
+image = "0.25"
+
+[[bin]]
+name = "usb_lcd"
+path = "src/main.rs"
+
+[[bin]]
+name = "main_test"
+path = "src/main_test.rs"

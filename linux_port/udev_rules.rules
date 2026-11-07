@@ -1,0 +1,17 @@
+# udev rules for the Winbond USB Display (0416:5302)
+#
+# The Linux port talks to the device over raw USB (libusb/pyusb) using
+# interrupt endpoint 0x02, so the node that matters is /dev/bus/usb/BBB/DDD.
+# MODE=0666 makes it usable without root; TAG+="uaccess" additionally grants
+# the logged-in desktop user access through systemd-logind.
+
+SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", \
+  ATTR{idVendor}=="0416", ATTR{idProduct}=="5302", \
+  MODE="0666", TAG+="uaccess"
+
+# Optional: the HID interface also exposes a hidraw node.  It is not used by
+# this port (raw EP 0x02 is the working transport), but relaxing it lets HID
+# debugging tools such as hidapitester talk to the same unit.
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", \
+  ATTRS{idVendor}=="0416", ATTRS{idProduct}=="5302", \
+  MODE="0666", TAG+="uaccess"

@@ -1,0 +1,193 @@
+TRCC Instructions
+Information Module
+
+Device List
+
+Numerical item name
+Name editable
+
+Click to redirect to the value
+
+Install .NET Framework
+
+Adding a new information module
+
+Device Function Area
+Preview
+
+Global Settings
+button
+
+Main Interface Function Area
+
+Main navigation button
+
+Main Function Area
+
+Quick Strat
+3-Steps to create a new theme
+Step 1
+
+Select the Online Theme
+buttonand select a theme
+
+Step 2
+
+Name your new theme and save it.
+
+Step 3
+
+Click on Local Theme button
+
+You will see this theme on the Local Theme page
+
+Select the Gallary button and
+select a background
+
+Preview Box
+
+The Preview Box is synchronized with the Display.
+You can use the mouse to drag the information in the Preview Box. After adjusting,
+click Save As. You can use the keyboard WASD to adjust the position in units of 1
+pixel, and shift+WASD to adjust the position in units of 10 pixels.
+For products with large screens, you need to double-click to pop up a large-size
+preview box, which can also be edited.
+
+Basic Function
+Introduction
+
+Display Angle: Select screen orientation as needed.
+Screen brightness: Adjust the screen brightness.
+
+Save As: Enter a name for the theme in the text area.
+Click the button on the right to save the theme to the local theme.
+
+Local Theme
+Display the themes saved locally
+
+Expor/lmport: TRCC local themes can be exported as separateles, saved on a computer
+and shared with other users.
+You can also import the theme files in your computer into TRCC.
+Carousel switch
+
+Carousel time setting
+Click the lower right corner of the desired carousel and select the desired theme.The
+carousel function will be automatically closed when clicking other functions.
+
+Online Theme
+Displays a list of online themes. After
+clicking, they will be downloaded to the
+softwarecache and then loadedinto the
+preview box.
+After the user confiqures other information,
+it can be saved to the local theme.
+The Online Theme includes the information,
+mask, and does not include the background.
+
+Displays a list of online background.After
+clicking, they will be downloaded to the
+softwarecache and then loaded into the
+preview box.
+After the user confiqures other
+information, it can be saved to the local
+theme.
+
+Note: The Gallary depends on the
+network,and the download time
+depends on the current network
+speed.
+
+Theme Edit Area
+
+Switch: Turn all Cards on and off.
+Card module coordinates: Displays the coordinates of the currently selected
+card on the screen,Displays the coordinates of the currently selected card on
+the screen, and you can also enter a value to move the position.
+Font
+Color Swatches
+Color Picker: After activation, left click to select color, right click to exit.
+Hue
+RGB Value
+Color History
+Common Colors
+Selecting different types of cards will display the corresponding settingsfor
+that card
+
+Add a clock
+Add day of the week
+Add Date
+
+Add text
+Add Values (The data source is all the
+information on the Information Module)
+
+Add Card: Adding new values. Double-click to delete a card.
+
+Loading mask image
+Note: The mask image is a laver between the
+information layer and the background layer. Used
+for layout and decoration, supports transparent
+layersThe file format is PNG.
+
+Background
+
+Load Video
+Load lmage
+
+Preview Button
+
+Close
+
+Clip Duration
+
+Total Video Length
+
+Zoom Slider Start Slider
+
+End Slider
+
+Start Time
+
+End Time
+
+Apply
+
+Apply
+
+Low frame rate(15)
+Rotate
+Adapt based on width High frame rate(30)
+Adapt based on height
+
+Rotate
+Adapt based on width
+Adapt based on height
+
+(You must click this button to
+complete the process)
+
+(You must click this button to
+complete the process)
+
+Push Flow
+
+Bounding box size
+Bounding box coordinates
+Show/hide the bounding box.Double-click the bounding box to hide it.
+
+Media Player
+Load Video
+
+Supports long video playback, but does !ot support saving as a themeVideo encoding
+supports H.264, H.265.
+Video container supports MP4, MKV, MOV, AVI, GIF.
+The resolution is limited to height x width ≤ 3840 x 2160.
+
+Preview Box
+
+Progress Bar
+Adapt based on width
+Adapt based on height
+PLAY/ PAUSE
+
+

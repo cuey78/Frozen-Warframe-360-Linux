@@ -1,0 +1,25 @@
+# ── Windows binaries / original vendor files (not part of the port) ──
+*.dll
+*.exe
+*.pdf
+*.zip
+*.runtimeconfig.json
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.pyo
+*.pdb
+
+# ── Rust ──
+rust_lcd/target/
+/Cargo.lock
+
+# ── Build outputs ──
+dist/
+build/
+*.egg-info/
+
+# ── OS ──
+.DS_Store
+Thumbs.db
