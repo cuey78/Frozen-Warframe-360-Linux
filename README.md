@@ -253,7 +253,7 @@ sudo bash linux_port/install-lcd-service.sh <username> /path/to/image.png
 Example:
 
 ```bash
-sudo bash linux_port/install-lcd-service.sh cuey /home/cuey/test2/TRCCCAP/rust_lcd/fett.png
+sudo bash linux_port/install-lcd-service.sh <username> /home/<username>/test2/TRCCCAP/rust_lcd/fett.png
 ```
 
 This:
