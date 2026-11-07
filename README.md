@@ -247,51 +247,69 @@ installer so the panel keeps displaying an image automatically on every boot.
 ### Install (run once as root)
 
 ```bash
-sudo bash linux_port/install-lcd-service.sh <username> /path/to/image.png
+sudo bash install-usb-lcd.sh
 ```
+
+The installer will interactively prompt you for:
+
+1. **System user** to run the LCD service as (defaults to your current non-root user)
+2. **Image file** to display (defaults to `linux_port/fett.png` if present)
+
+It then:
+
+1. Copies the Rust binary to `/usr/local/bin/usb-lcd`
+2. Copies your image to `/var/lib/usb-lcd/display-image.<ext>`
+3. Installs a udev rule for rootless USB access (group-restricted to the service user)
+4. Installs a systemd template service `usb-lcd@.service`
+5. Enables and starts `usb-lcd@<username>.service`
 
 Example:
 
 ```bash
-sudo bash linux_port/install-lcd-service.sh cuey /home/cuey/test2/TRCCCAP/rust_lcd/fett.png
+sudo bash install-usb-lcd.sh
+# System user to run the LCD service as [cuey]: <Enter>
+# Image file to display (PNG/JPEG) [/home/.../linux_port/fett.png]: /path/to/my-image.png
 ```
-
-This:
-
-1. Installs the udev rule for rootless USB access
-2. Installs the `winbond-lcd@.service` systemd template
-3. Enables and starts `winbond-lcd@<username>.service`
-4. Streams the chosen image forever, restarting on failure or reboot
 
 ### Manage the service
 
+The service is installed as a template instance `usb-lcd@<username>.service`:
+
 ```bash
 # Check status
-systemctl status winbond-lcd@cuey.service
+sudo systemctl status usb-lcd@cuey.service
 
 # View live logs
-journalctl -u winbond-lcd@cuey.service -f
+sudo journalctl -u usb-lcd@cuey.service -f
 
 # Stop / start / restart
-systemctl stop winbond-lcd@cuey.service
-systemctl start winbond-lcd@cuey.service
-systemctl restart winbond-lcd@cuey.service
+sudo systemctl stop usb-lcd@cuey.service
+sudo systemctl start usb-lcd@cuey.service
+sudo systemctl restart usb-lcd@cuey.service
 
 # Disable (stop running on boot)
-systemctl disable winbond-lcd@cuey.service
+sudo systemctl disable usb-lcd@cuey.service
 ```
 
 ### How it works
 
-The `winbond-lcd-runner` script waits up to 60 seconds for the USB device to
-appear at boot, then launches `usb_lcd_port.py image ...` without a `--duration`
-limit, so the panel streams continuously.  The Python port handles its own
-USB reconnection when the endpoint wedges, so the service stays healthy even
-if the device is briefly unplugged.
+The installer installs a systemd template service (`usb-lcd@.service`). When
+enabled for a user (e.g. `usb-lcd@cuey.service`), it runs:
+
+```
+/usr/local/bin/usb-lcd image /var/lib/usb-lcd/display-image.png --fit cover --fps 20
+```
+
+as that user, restarting on failure. The binary continuously streams the image
+to the panel (~15–20 fps). Because the panel blanks when data stops, the stream
+never stops until the service is stopped.
+
+The service runs as a non-root user, with the udev rule granting that user's
+primary group access to the `0416:5302` USB device.
 
 To change the image or options, edit
-`/etc/systemd/system/winbond-lcd@.service` and run
-`systemctl daemon-reload && systemctl restart winbond-lcd@<username>.service`.
+`/etc/systemd/system/usb-lcd@.service` and run
+`sudo systemctl daemon-reload && sudo systemctl restart usb-lcd@<username>.service`.
 
 ---
 
