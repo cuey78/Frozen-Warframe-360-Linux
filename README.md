@@ -1,4 +1,4 @@
-# TRCCCAP Linux Port
+# TRCCCAP Linux Port - Thermalright Frozen warframe-360 Control Software
 
 Linux port of the Windows **USBLCDNEW / TRCC** LCD control software for the **Winbond USBDISPLAY** panel (USB ID `0416:5302`, firmware `bcdDevice` 4.07).
 
