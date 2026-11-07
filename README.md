@@ -239,6 +239,62 @@ The PM/FBL table covers the panels documented by the reference project: PM/FBL 3
 
 ---
 
+## Running as a background service (boot + reboot)
+
+The `linux_port/` directory includes a systemd service template and an
+installer so the panel keeps displaying an image automatically on every boot.
+
+### Install (run once as root)
+
+```bash
+sudo bash linux_port/install-lcd-service.sh <username> /path/to/image.png
+```
+
+Example:
+
+```bash
+sudo bash linux_port/install-lcd-service.sh cuey /home/cuey/test2/TRCCCAP/rust_lcd/fett.png
+```
+
+This:
+
+1. Installs the udev rule for rootless USB access
+2. Installs the `winbond-lcd@.service` systemd template
+3. Enables and starts `winbond-lcd@<username>.service`
+4. Streams the chosen image forever, restarting on failure or reboot
+
+### Manage the service
+
+```bash
+# Check status
+systemctl status winbond-lcd@cuey.service
+
+# View live logs
+journalctl -u winbond-lcd@cuey.service -f
+
+# Stop / start / restart
+systemctl stop winbond-lcd@cuey.service
+systemctl start winbond-lcd@cuey.service
+systemctl restart winbond-lcd@cuey.service
+
+# Disable (stop running on boot)
+systemctl disable winbond-lcd@cuey.service
+```
+
+### How it works
+
+The `winbond-lcd-runner` script waits up to 60 seconds for the USB device to
+appear at boot, then launches `usb_lcd_port.py image ...` without a `--duration`
+limit, so the panel streams continuously.  The Python port handles its own
+USB reconnection when the endpoint wedges, so the service stays healthy even
+if the device is briefly unplugged.
+
+To change the image or options, edit
+`/etc/systemd/system/winbond-lcd@.service` and run
+`systemctl daemon-reload && systemctl restart winbond-lcd@<username>.service`.
+
+---
+
 ## License
 
 Provided as-is for interoperability with the Winbond USB Display. The original Windows software and its protocol remain the property of their respective authors.
