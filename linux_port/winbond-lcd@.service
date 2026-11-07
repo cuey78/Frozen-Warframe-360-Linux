@@ -1,0 +1,22 @@
+[Unit]
+Description=Winbond USBDISPLAY (0416:5302) LCD image runner (instance %i)
+After=multi-user.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=%i
+Group=%i
+WorkingDirectory=/home/cuey/test2/TRCCCAP/linux_port
+# Ensure the USB device node is readable/writable by the user
+ExecStartPre=/bin/sh -c 'chmod 666 /dev/bus/usb/*/* 2>/dev/null || true'
+# Stream the image forever; usb_lcd_port.py handles reconnection internally.
+# Edit IMAGE_FILE below to your preferred image.
+ExecStart=/home/cuey/test2/TRCCCAP/linux_port/winbond-lcd-runner /home/cuey/test2/TRCCCAP/rust_lcd/fett.png --fit cover --fps 20
+Restart=always
+RestartSec=5
+StartLimitBurst=10
+StartLimitIntervalSec=60
+
+[Install]
+WantedBy=multi-user.target
