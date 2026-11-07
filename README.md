@@ -4,6 +4,9 @@ Linux port of the Windows **USBLCDNEW / TRCC** LCD control software for the **Wi
 
 Displays still images, solid colours, videos (Python only) and a built-in test card on the real hardware, with rotation and brightness applied host-side.
 
+NOTE:
+Upfront Disclose: This was Created using AI reverse engineering - Since no one had a working option i made one (with help) , im not a software engineer so anyone can fork this and improve it , it works for what i need.
+
 ```
 Device:        Winbond Electronics Corp. USBDISPLAY
 USB ID:        0416:5302
