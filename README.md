@@ -264,14 +264,15 @@ sudo bash install-usb-lcd.sh
 The installer will interactively prompt you for:
 
 1. **System user** to run the LCD service as (defaults to your current non-root user)
-2. **Image file** to display (defaults to `linux_port/fett.png` if present)
+2. **File to display** — an image (`PNG/JPG`, defaults to `fett.png` if present) or a video (`MP4/MKV/MOV/AVI/GIF/WEBM`; needs `ffmpeg` in `PATH`)
+3. For video only: **fps** (default 15), **fit** (default `cover`), **rotation** (default 0) and **brightness** (default 100)
 
 It then:
 
 1. Copies the Rust binary to `/usr/local/bin/usb-lcd`
-2. Copies your image to `/var/lib/usb-lcd/display-image.<ext>`
+2. Copies your image to `/var/lib/usb-lcd/display-image.<ext>` or your video to `/var/lib/usb-lcd/display-video.<ext>`
 3. Installs a udev rule for rootless USB access (group-restricted to the service user)
-4. Installs a systemd template service `usb-lcd@.service`
+4. Installs a systemd template service `usb-lcd@.service` — images run as `usb-lcd image ...`, videos as `usb-lcd video ... --loop` so the panel stays fed
 5. Enables and starts `usb-lcd@<username>.service`
 
 Example:
@@ -279,7 +280,9 @@ Example:
 ```bash
 sudo bash install-usb-lcd.sh
 # System user to run the LCD service as [cuey]: <Enter>
-# Image file to display (PNG/JPEG) [/home/.../linux_port/fett.png]: /path/to/my-image.png
+# File to display (image PNG/JPG or video MP4/MKV/MOV/AVI/GIF) [/home/.../linux_port/fett.png]: /path/to/clip.mp4
+# Video FPS (panel tops out at ~15-20) [15]: <Enter>
+# Video fit (contain|cover|stretch) [cover]: <Enter>
 ```
 
 ### Manage the service
@@ -311,9 +314,16 @@ enabled for a user (e.g. `usb-lcd@cuey.service`), it runs:
 /usr/local/bin/usb-lcd image /var/lib/usb-lcd/display-image.png --fit cover --fps 20
 ```
 
+or, for a video file:
+
+```
+/usr/local/bin/usb-lcd video /var/lib/usb-lcd/display-video.mp4 --fit cover --fps 15 --rotation 0 --brightness 100 --loop
+```
+
 as that user, restarting on failure. The binary continuously streams the image
-to the panel (~15–20 fps). Because the panel blanks when data stops, the stream
-never stops until the service is stopped.
+or video to the panel (~15–20 fps). Because the panel blanks when data stops,
+the stream never stops until the service is stopped (videos are looped for
+exactly this reason).
 
 The service runs as a non-root user, with the udev rule granting that user's
 primary group access to the `0416:5302` USB device.

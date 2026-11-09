@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # install-usb-lcd.sh - Installer for the Winbond USBDISPLAY LCD port.
 # Run with: sudo bash install-usb-lcd.sh
+#
+# Supports still images (PNG/JPG) and videos (MP4/MKV/MOV/AVI/GIF/WebM/MPEG)
+# via the Rust `video` command (needs ffmpeg in PATH for video).
 
 set -Eeuo pipefail
 
@@ -78,41 +81,95 @@ if [[ -z $SERVICE_USER || $SERVICE_USER == root ]] || ! id "$SERVICE_USER" >/dev
 fi
 SERVICE_GROUP="$(id -gn "$SERVICE_USER")"
 
-DEFAULT_IMAGE=""
+DEFAULT_FILE=""
 if [[ -f $SCRIPT_DIR/rust_lcd/fett.png ]]; then
-    DEFAULT_IMAGE="$SCRIPT_DIR/rust_lcd/fett.png"
+    DEFAULT_FILE="$SCRIPT_DIR/rust_lcd/fett.png"
 elif [[ -f $SCRIPT_DIR/linux_port/fett.png ]]; then
-    DEFAULT_IMAGE="$SCRIPT_DIR/linux_port/fett.png"
+    DEFAULT_FILE="$SCRIPT_DIR/linux_port/fett.png"
 fi
 
-IMAGE_FILE="$(ask 'Image file to display (PNG/JPEG)' "$DEFAULT_IMAGE")"
-if [[ ! -f $IMAGE_FILE || ! -r $IMAGE_FILE ]]; then
-    err "Image file does not exist or is not readable: $IMAGE_FILE"
+DISPLAY_FILE="$(ask 'File to display (image PNG/JPG or video MP4/MKV/MOV/AVI/GIF)' "$DEFAULT_FILE")"
+if [[ ! -f $DISPLAY_FILE || ! -r $DISPLAY_FILE ]]; then
+    err "File does not exist or is not readable: $DISPLAY_FILE"
     exit 1
 fi
-IMAGE_ABS="$(realpath -- "$IMAGE_FILE")"
-IMAGE_EXT="${IMAGE_ABS##*.}"
-IMAGE_EXT="${IMAGE_EXT,,}"
-case "$IMAGE_EXT" in
-    png|jpg|jpeg) ;;
-    *) err "Unsupported image extension '.$IMAGE_EXT'. Use PNG, JPG, or JPEG."; exit 1 ;;
+DISPLAY_ABS="$(realpath -- "$DISPLAY_FILE")"
+DISPLAY_EXT="${DISPLAY_ABS##*.}"
+DISPLAY_EXT="${DISPLAY_EXT,,}"
+case "$DISPLAY_EXT" in
+    png|jpg|jpeg)
+        DISPLAY_KIND=image
+        ;;
+    mp4|m4v|mkv|mov|avi|gif|webm|mpeg|mpg)
+        DISPLAY_KIND=video
+        ;;
+    *)
+        err "Unsupported file extension '.$DISPLAY_EXT'. Use PNG/JPG/JPEG for an image, or MP4/MKV/MOV/AVI/GIF/WEBM for a video."
+        exit 1
+        ;;
 esac
 
-SERVICE_INSTANCE="usb-lcd@${SERVICE_USER}.service"
-IMAGE_DEST_DIR="/var/lib/usb-lcd"
-IMAGE_DEST="$IMAGE_DEST_DIR/display-image.$IMAGE_EXT"
+VIDEO_FPS=""
+VIDEO_FIT=""
+VIDEO_ROTATION=""
+VIDEO_BRIGHTNESS=""
+if [[ $DISPLAY_KIND == video ]]; then
+    command -v ffmpeg >/dev/null 2>&1 || {
+        err "ffmpeg is required for video playback but was not found in PATH."
+        err "Install it first, e.g.: sudo dnf install ffmpeg   (Fedora)"
+        err "                        or: sudo apt install ffmpeg  (Debian/Ubuntu)"
+        exit 1
+    }
+    VIDEO_FPS="$(ask 'Video FPS (panel tops out at ~15-20)' '15')"
+    if ! [[ $VIDEO_FPS =~ ^[0-9]+$ ]] || (( VIDEO_FPS < 1 || VIDEO_FPS > 30 )); then
+        err "Video FPS must be an integer between 1 and 30."
+        exit 1
+    fi
+    VIDEO_FIT="$(ask 'Video fit (contain|cover|stretch)' 'cover')"
+    VIDEO_FIT="${VIDEO_FIT,,}"
+    case "$VIDEO_FIT" in
+        contain|cover|stretch) ;;
+        *) err "Video fit must be contain, cover, or stretch."; exit 1 ;;
+    esac
+    VIDEO_ROTATION="$(ask 'Video rotation in degrees (0|90|180|270)' '0')"
+    case "$VIDEO_ROTATION" in
+        0|90|180|270) ;;
+        *) err "Video rotation must be 0, 90, 180, or 270."; exit 1 ;;
+    esac
+    VIDEO_BRIGHTNESS="$(ask 'Video brightness percent (0-100)' '100')"
+    if ! [[ $VIDEO_BRIGHTNESS =~ ^[0-9]+$ ]] || (( VIDEO_BRIGHTNESS > 100 )); then
+        err "Video brightness must be an integer between 0 and 100."
+        exit 1
+    fi
+fi
 
-info "Selected image: $IMAGE_ABS"
+SERVICE_INSTANCE="usb-lcd@${SERVICE_USER}.service"
+DISPLAY_DEST_DIR="/var/lib/usb-lcd"
+if [[ $DISPLAY_KIND == video ]]; then
+    DISPLAY_DEST="$DISPLAY_DEST_DIR/display-video.$DISPLAY_EXT"
+    EXEC_START="/usr/local/bin/usb-lcd video $DISPLAY_DEST --fit $VIDEO_FIT --fps $VIDEO_FPS --rotation $VIDEO_ROTATION --brightness $VIDEO_BRIGHTNESS --loop"
+    TEST_CMD="/usr/local/bin/usb-lcd video \"$DISPLAY_DEST\" --fit $VIDEO_FIT --fps $VIDEO_FPS --rotation $VIDEO_ROTATION --brightness $VIDEO_BRIGHTNESS --loop --duration 10"
+else
+    DISPLAY_DEST="$DISPLAY_DEST_DIR/display-image.$DISPLAY_EXT"
+    EXEC_START="/usr/local/bin/usb-lcd image $DISPLAY_DEST --fit cover --fps 20"
+    TEST_CMD="/usr/local/bin/usb-lcd image \"$DISPLAY_DEST\" --fit cover --fps 20 --duration 10"
+fi
+
+info "Selected file: $DISPLAY_ABS"
+info "Selected kind: $DISPLAY_KIND"
+if [[ $DISPLAY_KIND == video ]]; then
+    info "Video options: fps=$VIDEO_FPS fit=$VIDEO_FIT rotation=$VIDEO_ROTATION brightness=$VIDEO_BRIGHTNESS loop=on"
+fi
 info "Service user/group: $SERVICE_USER:$SERVICE_GROUP"
 
 info "Installing binary ..."
 install -D -o root -g root -m 0755 "$RUST_BIN" /usr/local/bin/usb-lcd
 ok "Binary installed: /usr/local/bin/usb-lcd"
 
-info "Installing image ..."
-install -d -o root -g root -m 0755 "$IMAGE_DEST_DIR"
-install -o root -g root -m 0644 "$IMAGE_ABS" "$IMAGE_DEST"
-ok "Image installed: $IMAGE_DEST"
+info "Installing $DISPLAY_KIND ..."
+install -d -o root -g root -m 0755 "$DISPLAY_DEST_DIR"
+install -o root -g root -m 0644 "$DISPLAY_ABS" "$DISPLAY_DEST"
+ok "$DISPLAY_KIND installed: $DISPLAY_DEST"
 
 # Keep project-specific rules and add a narrowly scoped permission rule.
 # Never chmod every USB device on the host.
@@ -144,7 +201,7 @@ SERVICE_FILE="/etc/systemd/system/usb-lcd@.service"
 info "Installing systemd service template ..."
 cat > "$SERVICE_FILE" <<SERVICE_EOF
 [Unit]
-Description=Winbond USBDISPLAY (0416:5302) LCD image runner for %i
+Description=Winbond USBDISPLAY (0416:5302) LCD $DISPLAY_KIND runner for %i
 After=systemd-udevd.service
 StartLimitIntervalSec=60
 StartLimitBurst=10
@@ -154,7 +211,7 @@ Type=simple
 User=%i
 Group=$SERVICE_GROUP
 WorkingDirectory=/usr/local/bin
-ExecStart=/usr/local/bin/usb-lcd image $IMAGE_DEST --fit cover --fps 20
+ExecStart=$EXEC_START
 Restart=on-failure
 RestartSec=5
 
@@ -183,10 +240,14 @@ printf '\n'
 info "Installation complete"
 printf '\n'
 printf 'Binary:  %s\n' /usr/local/bin/usb-lcd
-printf 'Image:   %s\n' "$IMAGE_DEST"
+printf 'Kind:    %s\n' "$DISPLAY_KIND"
+printf 'File:    %s\n' "$DISPLAY_DEST"
+if [[ $DISPLAY_KIND == video ]]; then
+    printf 'Video:   fps=%s fit=%s rotation=%s brightness=%s loop=on\n' "$VIDEO_FPS" "$VIDEO_FIT" "$VIDEO_ROTATION" "$VIDEO_BRIGHTNESS"
+fi
 printf 'Service: %s\n' "$SERVICE_INSTANCE"
 printf '\n'
-printf 'Test manually (10 seconds):\n  sudo /usr/local/bin/usb-lcd image "%s" --fit cover --fps 20 --duration 10\n' "$IMAGE_DEST"
+printf 'Test manually (10 seconds):\n  sudo %s\n' "$TEST_CMD"
 printf '\nManage the service:\n'
 printf '  sudo systemctl status %s\n' "$SERVICE_INSTANCE"
 printf '  sudo journalctl -u %s -f\n' "$SERVICE_INSTANCE"
