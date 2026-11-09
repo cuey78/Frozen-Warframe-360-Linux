@@ -2,7 +2,7 @@
 
 Linux port of the Windows **USBLCDNEW / TRCC** LCD control software for the **Winbond USBDISPLAY** panel (USB ID `0416:5302`, firmware `bcdDevice` 4.07).
 
-Displays still images, solid colours, videos (Python only) and a built-in test card on the real hardware, with rotation and brightness applied host-side.
+Displays still images, solid colours, videos and a built-in test card on the real hardware, with rotation and brightness applied host-side.
 
 NOTE:
 Upfront Disclose: This was Created using AI reverse engineering - Since no one had a working option i made one (with help) , im not a software engineer so anyone can fork this and improve it , it works for what i need.
@@ -30,7 +30,7 @@ Transport:     pyusb / rusb over interrupt EP 0x02 (OUT) + EP 0x81 (IN)
 │   └── fett.png                # Sample image
 ├── rust_lcd/                   # Rust port (rusb 0.9 + image)
 │   ├── Cargo.toml
-│   ├── src/main.rs             # Main port: info/testcard/color/raw/image
+│   ├── src/main.rs             # Main port: info/testcard/color/raw/image/video
 │   ├── src/main_test.rs        # Known-compiling reference binary
 │   └── .gitignore
 └── .gitignore
@@ -103,7 +103,11 @@ cargo build --release --bin usb_lcd
 ./target/release/usb_lcd color ff0000
 ./target/release/usb_lcd image fett.png --duration 10
 ./target/release/usb_lcd raw file.rgb24 --duration 10
+./target/release/usb_lcd video clip.mp4 --fit cover --fps 15
+./target/release/usb_lcd video clip.mp4 --loop --duration 30
 ```
+
+Video playback in both ports decodes through the external `ffmpeg` binary, so install it first (`sudo dnf install ffmpeg` / `sudo apt install ffmpeg`) — the Rust binary needs it in `PATH` for the `video` command only.
 
 ---
 
@@ -131,14 +135,18 @@ Streams the built-in orientation card (coloured bars + TOP/CENTER/BOT text). Qui
 Streams a solid colour. Names: `red green blue white black yellow cyan magenta orange purple pink grey warm`. `--brightness 0` gives black.
 
 ### `image FILE` (Python + Rust)
-Streams a still image continuously.
+Streams a still image continuously. Python honours the `--fit` modes below; the Rust port currently always stretches the image onto the panel (use Python's `image --fit ...` for fitted stills).
 
 * `--fit contain` (default) — letterbox, keep aspect ratio
 * `--fit cover` — fill and centre-crop
 * `--fit stretch` — exact fit, ignore aspect ratio
 
-### `video FILE` (Python only)
-Plays a video through `ffmpeg`. Frames are resampled to `--fps`, scaled with the same three fit modes, rotated and encoded as RGB565 in Python. Without `--loop` it plays once; with `--loop` it repeats; `--duration` limits total playback time.
+### `video FILE` (Python + Rust)
+Plays a video through `ffmpeg` (mp4/mkv/mov/avi/gif — anything ffmpeg decodes). Frames are resampled to `--fps`, scaled with the same three fit modes, rotated and encoded as RGB565 host-side (Python, or Rust in the Rust port). Without `--loop` it plays once and exits; with `--loop` it repeats; `--duration` limits total playback time.
+
+* `--fit cover` (default) — fill and centre-crop
+* `--fit contain` — letterbox, keep aspect ratio
+* `--fit stretch` — exact fit, ignore aspect ratio
 
 ### `raw FILE.rgb24` (Rust only)
 Streams a packed 320×240 RGB24 file.
@@ -313,6 +321,23 @@ primary group access to the `0416:5302` USB device.
 To change the image or options, edit
 `/etc/systemd/system/usb-lcd@.service` and run
 `sudo systemctl daemon-reload && sudo systemctl restart usb-lcd@<username>.service`.
+
+---
+
+## Releases
+
+**v1.1.0 — Rust 0.2.0 (video playback).** The Rust port gains the `video`
+command (ffmpeg decode, RGB565 encode in Rust, verified on hardware), plus
+`--vid`/`--pid`, `--fit`, `--rotation`, `--brightness` and `--loop` support
+on `video`, and `--brightness` on the other Rust commands.
+
+Build the release binary with:
+
+```bash
+cd rust_lcd
+cargo build --release --bin usb_lcd
+./target/release/usb_lcd video clip.mp4 --fit cover --fps 15
+```
 
 ---
 
